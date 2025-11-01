@@ -1,17 +1,17 @@
 # 🧾 APICoreComisiones
 
-API desarrollada en **.NET 8 Web API** para el cálculo de **comisiones de vendedores** según reglas configuradas,  
-El proyecto sigue principios de **Clean Architecture** y **SOLID**, separando responsabilidades entre capas para facilitar la mantenibilidad y extensibilidad.
+API desarrollada en **.NET 8 Web API** para el cálculo de **comisiones de vendedores** según reglas configuradas.
+El proyecto utiliza una arquitectura por capas simplificada (Controlador, Servicio, Capa de Datos) que separa las responsabilidades principales para mantener el código organizado y fácil de entender.
 
 ## 📘 Descripción general
 
-El sistema API permite calcular las comisiones de los vendedores con base en:
+El sistema permite a una aplicación (como un frontend de Angular) solicitar el cálculo de comisiones enviando un rango de fechas
+(`FechaInicio`, `FechaFin`).
 
-- Las **ventas registradas** en un rango de fechas (`FechaInicio`, `FechaFin`).
-- Las **reglas de comisión** almacenadas en base de datos (`MontoMinimo`, `Porcentaje`).
-
-El cálculo se realiza aplicando la política **Flat**:  
-> “El vendedor recibe un porcentaje único sobre el total de sus ventas según el tramo más alto que cumple.”
+La API calcula las comisiones basándose en:
+    - Las ventas registradas para cada vendedor.
+    - Las reglas de comisión almacenadas en la base de datos (ej. "Si vendes más de $10,000, obtienes un 5%").
+    - El cálculo aplica una lógica de "comisión plana":
 
 ---
 
@@ -24,13 +24,9 @@ APICoreComisiones
 ├── Controllers/ # Endpoints HTTP (API pública)
 │ └── CommissionController.cs
 │
-├── Application/ # Lógica de aplicación y orquestación
+├── Application/ # Capa de lógica del negocio
 │ ├── ICommissionService.cs
 │ └── CommissionService.cs
-│
-├── Domain/ # Lógica de negocio (reglas puras)
-│ ├── ICommissionPolicy.cs
-│ └── FlatCommissionPolicy.cs
 │
 ├── Data/ # Acceso a base de datos (EF Core)
 │ └── AppDbContext.cs
@@ -40,7 +36,7 @@ APICoreComisiones
 │ ├── Vendedor.cs
 │ └── Venta.cs
 │
-├── ViewModels/ # Contratos de API (entrada/salida)
+├── ViewModels/ # Moldes (DTOs) para los datos que entran y salen de la API.
 │ ├── CalculateCommissionVm.cs
 │ └── CommissionRowVm.cs
 │ 
@@ -59,13 +55,12 @@ APICoreComisiones
    ```
 2. CommissionController valida las fechas y llamas al servicio
 3. CommissionService:
-   - FIltra ventas en ese rango
-   - Agrupa por vendedor y suma montos
+   - Consulta BDD para obtener las ventas
+   - Consulta las ventas por vendedor y suma sus montos totales.
    - Carga las reglas
-   - Usa FlatCommissionPolicy para determinar el porcentaje aplicable
-   - Calcula comision = total * porcentaje
+   - Para cada vendedor se determina el porcetaje que le corresponde comparando su total de ventas con las teglas. 
 4. La API responde con un JSON:
-    ```json
+ ```json
    {
      "vendedorId": 2,
      "vendedor": "Luis",
@@ -73,10 +68,11 @@ APICoreComisiones
      "porcentajeAplicado": 0.15,
      "comisionCalculada": 3900
    }
+   ```
 
 ## EJECUCIÓN DEL PROYECTO
 1. Clonar el repositorio
-  - git clone https://github.com/tuusuario/APICoreComisiones.git
+  - git clone https://github.com/godmath04/CommssionsCore.git
   - cd APICoreComisiones
 2. Configurar la cadena de conexión en appsettings.json
 3. Crear la base de datos y migraciones
